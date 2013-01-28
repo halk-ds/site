@@ -1,0 +1,236 @@
+<?php
+
+/**
+ * Implements hook_menu();
+ */
+function myajax_menu() {
+  $items = array(
+    'myajax-wizard' => array(
+      'title' => 'My ajax wizard.',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('myajax_wizard'),
+      'access callback' => TRUE,
+    ),
+    'myajax-addrow' => array(
+      'title' => 'My ajax add row.',
+      'page callback' => 'drupal_get_form',
+      'page arguments' => array('myajax_addrow'),
+      'access callback' => TRUE,
+    ),
+  );
+
+  return $items;
+}
+
+/**
+ * Implements myajax_simple();
+ */
+function myajax_wizard($form, &$form_state, $no_js_use = FALSE) {
+
+  $form['#prefix'] = '<div id="form">';
+  $form['#suffix'] = '</div>';
+
+  $step = empty($form_state['storage']['step']) ? 1 : $form_state['storage']['step'];
+  $form_state['storage']['step'] = $step;
+
+  switch ($step) {
+    case 1:
+      $form['step1'] = array(
+        '#type' => 'fieldset',
+      );
+      $form['step1']['login'] = array(
+        '#type' => 'textfield',
+        '#title' => 'Log in name:',
+        '#default_value' => empty($form_state['storage']['step1']['login']) ? '' : $form_state['storage']['step1']['login'],
+        '#required' => TRUE,
+      );
+      break;
+
+    case 2:
+      $form['step2'] = array(
+        '#type' => 'fieldset',
+      );
+      $form['step2']['email'] = array(
+        '#type' => 'textfield',
+        '#title' => 'Email:',
+        '#default_value' => empty($form_state['storage']['step2']['email']) ? '' : $form_state['storage']['step2']['email'],
+        '#required' => TRUE,
+      );
+      break;
+
+    case 3:
+      $form['step3'] = array(
+        '#type' => 'fieldset',
+      );
+      $form['step3']['name'] = array(
+        '#type' => 'textfield',
+        '#title' => 'Name:',
+        '#default_value' => empty($form_state['storage']['step3']['name']) ? '' : $form_state['storage']['step3']['name'],
+        '#required' => TRUE,
+      );
+      $form['step3']['surname'] = array(
+        '#type' => 'textfield',
+        '#title' => 'Surname:',
+        '#default_value' => empty($form_state['storage']['step3']['surname']) ? '' : $form_state['storage']['step3']['surname'],
+        '#required' => TRUE,
+      );
+      break;
+  }
+
+  if ($step < 3) {
+    $form['next'] = array(
+      '#type' => 'submit',
+      '#value' => 'Next step',
+      '#ajax' => array(
+        'callback' => 'myajax_wizard_callback',
+        'wrapper' => 'form',
+      ),
+    );
+  }
+
+  if ($step > 1) {
+    $form['perv'] = array(
+      '#type' => 'submit',
+      '#value' => 'Pervious step',
+      '#ajax' => array(
+        'callback' => 'myajax_wizard_callback',
+        'wrapper' => 'form',
+      ),
+    );
+  }
+
+  if ($step == 3) {
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => 'Submit',
+      '#ajax' => array(
+        'callback' => 'myajax_wizard_callback',
+        'wrapper' => 'form',
+      ),
+    );
+  }
+
+  return $form;
+}
+
+function myajax_wizard_callback($form, $form_state) {
+  return $form;
+}
+
+/**
+ * Submit function for myajax__wizard.
+ */
+function myajax_wizard_submit($form, &$form_state) {
+  $c_step = 'step' . $form_state['storage']['step'];
+  $form_state['storage'][$c_step] = $form_state['values'];
+
+  if ($form_state['triggering_element']['#value'] == 'Next step') {
+    $form_state['storage']['step']++;
+  }
+
+  if ($form_state['triggering_element']['#value'] == 'Pervious step') {
+    $form_state['storage']['step']--;
+  }
+
+  if ($form_state['triggering_element']['#value'] == 'Submit') {
+    drupal_set_message(ds_show_array($form_state['storage']));
+    $form_state['rebuild'] = FALSE;
+    return;
+  }
+
+  $form_state['rebuild'] = TRUE;
+  return;
+}
+
+
+
+
+
+/**
+ * Implements myajax_simple();
+ */
+function myajax_addrow($form, &$form_state, $no_js_use = FALSE) {
+
+  $form = array();
+
+  $step = empty($form_state['storage']['step']) ? 1 : $form_state['storage']['step'];
+  $form_state['storage']['step'] = $step;
+
+  $form['#prefix']='<div id="form">';
+  $form['#suffix']='</div>';
+
+  $form['text'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Text:',
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Submit',
+    '#ajax' => array(
+      'callback' => 'myajax_addrow_callback',
+      'wrapper' => 'form',
+    ),
+  );
+
+  for ($i = 1; $i < $step; $i++) {
+    if (!empty($form_state['storage'][$i])) {
+      $form['row' . $i] = array(
+        '#type' => 'fieldset',
+        '#prefix' => '<div id="row' . $i . '">',
+        '#suffix' => '</div>',
+      );
+
+      $form['row' . $i]['button'] = array(
+        '#type' => 'submit',
+        '#value' => 'Delete # ' . $i,
+      );
+
+      $form['row' . $i]['markup'] = array(
+        '#markup' => $form_state['storage'][$i],
+      );
+    }
+
+  }
+
+  return $form;
+}
+
+function myajax_addrow_callback($form, $form_state) {
+  $form['text']['#value'] = '';
+  return $form;
+}
+
+/**
+ * Validation function for myajax__addrow.
+ */
+function myajax_addrow_validate($form, &$form_state) {
+
+  if ($form_state['triggering_element']['#value'] == 'Submit') {
+    if (empty($form_state['values']['text'])) {
+      form_set_error('text','Text field is empty!');
+    }
+  }
+
+  return 0;
+}
+
+/**
+ * Submit function for myajax__wizard.
+ */
+function myajax_addrow_submit($form, &$form_state) {
+  if (substr($form_state['triggering_element']['#value'],0,6) == 'Delete') {
+    $objid = $form_state['triggering_element']['#array_parents'][0];
+    $objid = substr($objid, 3);
+    if (!empty($form_state['storage'][$objid])) {
+      unset($form_state['storage'][$objid]);
+    }
+  }
+  else {
+    $form_state['storage'][$form_state['storage']['step']] = $form_state['values']['text'];
+    $form_state['storage']['step']++;
+    $form_state['storage']['clear'] = 1;
+  }
+  $form_state['rebuild'] = TRUE;
+  return 0;
+}

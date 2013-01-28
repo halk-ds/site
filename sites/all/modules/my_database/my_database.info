@@ -1,0 +1,5 @@
+;$Id$
+name = My database module
+description = "Module to work with database."
+version = "7.x-dev"
+core = "7.x"

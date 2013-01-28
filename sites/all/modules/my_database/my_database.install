@@ -1,0 +1,41 @@
+<?php
+/**
+ * @file:
+ * nahuai?
+ */
+function my_database_schema() {
+  $schema['custom_table'] = array(
+    'description' => 'Table description',
+    'fields' => array(
+      'id' => array(
+        'description' => 'The primary identifier',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE
+      ),
+      'number' => array(
+        'description' => 'The number',
+        'type' => 'int',
+        'unsigned' => TRUE
+      ),
+      'teaser' => array(
+        'description' => 'Teaser',
+        'type' => 'varchar',
+        'length' => 150
+      ),
+      'text' => array(
+        'description' => 'Text',
+        'type' => 'text',
+        'size' => 'big'
+      )
+    ),
+    'primary key' => array('id')
+  );
+
+
+  return $schema;
+}
+
+function my_database_uninstall() {
+  drupal_uninstall_schema('my_database');
+}

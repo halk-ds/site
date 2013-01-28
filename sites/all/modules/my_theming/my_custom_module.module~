@@ -1,0 +1,144 @@
+<?php
+
+/**
+ *Implements hook_permission()
+ */
+function my_custom_module_permission() {
+	$perm = array();
+
+	$perm['temp permission'] = array(
+		'title'       => t('Temp permission'),
+		'description' => t('Only registered user can see this block.')
+	);
+
+	return $perm;
+}
+
+
+
+
+
+/**
+ *Implements hook_menu()
+ */
+function my_custom_module_menu() {
+	$items = array();
+
+	$items['main'] = array(
+		'title'           => 'Main page',
+		'page callback'   => 'my_custom_module_main_page',
+		'access callback' => TRUE
+	);
+	$items['forbidden'] = array(
+		'title'           => 'Error 404',
+		'page callback'   => 'my_custom_module_forbidden',
+		'access callback' => TRUE
+	);
+	$items['noaccess'] = array(
+		'title'           => 'Error 403',
+		'page callback'   => 'my_custom_module_noaccess',
+		'access callback' => TRUE
+	);
+
+	return $items;
+}
+
+/**
+ * Function main_page
+ */
+function my_custom_module_main_page() {
+	return t('This is main page of site.local');
+}
+
+/**
+ * Function forbidden
+ */
+function my_custom_module_forbidden() {
+	return t('ERROR 404. Page not found!');
+}
+
+/**
+ * Function noaccess
+ */
+function my_custom_module_noaccess() {
+	return t('ERROR 403. Access denied.');
+}
+
+
+
+
+
+/**
+ *Implements hook_block_info()
+ */
+function my_custom_module_block_info() {
+	$blocks = array();
+
+	$blocks['my_custom_module_test']['info']  = 'Random text';
+	$blocks['my_custom_module_test']['cache'] = 'DRUPAL_NO_CACHE';
+
+	return $blocks;
+}
+
+/**
+ * Implements hook_block_view()
+ */
+function my_custom_module_block_view($delta = '') {
+	$block = array();
+
+	if (user_access('temp permission')) {
+		$block_content = (string) mt_rand(0,255);
+	}
+	else {
+		$block_content = 'Access to view this content is denied';
+	}
+
+	switch ($delta) {
+		case 'my_custom_module_test':
+			$block['subject'] = 'Dummy text';
+			$block['content'] = $block_content;
+		break;
+	}
+
+	return $block;
+}
+
+
+
+
+
+/**
+ * Implements hook_node_view()
+ */
+function my_custom_module_node_view($node, $view_mode, $langcode) {
+	if ($view_mode == 'full') {
+		$node->content['mycontent'] = array(
+		'#markup' => 'This content added by hook_node_view().',
+		'#weight' => 10,
+		);
+	}
+}
+
+
+
+
+
+/**
+ * Implements hook_node_access()
+ */
+function my_custom_module_node_access($node, $op, $account) {
+	if (($op == 'view') && ($account->uid == 4)) {
+		return NODE_ACCESS_DENY;
+	}
+}
+
+
+
+
+
+/**
+ * Implements hook_user_view_alter()
+ */
+function my_custom_module_user_view_alter(&$account, $view_mode, $langcode) {
+	unset($account['summary']);
+}

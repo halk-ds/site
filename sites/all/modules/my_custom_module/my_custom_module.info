@@ -1,0 +1,5 @@
+;$Id$
+name = My custom module
+description = "Hook_menu module. Create main, 404, 403 pages."
+version = "7.x-dev"
+core = "7.x"

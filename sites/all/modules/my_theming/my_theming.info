@@ -1,0 +1,5 @@
+;$Id$
+name = My theming module
+description = "Module for theming my site."
+version = "7.x-dev"
+core = "7.x"

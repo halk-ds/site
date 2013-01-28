@@ -1,0 +1,168 @@
+<?php
+
+/**
+ *Implements hook_menu()
+ */
+function my_theming_menu() {
+	$items = array();
+
+	$items['theming'] = array(
+		'title'           => 'Theming page',
+		'page callback'   => 'my_theming_page',
+		'access callback' => TRUE
+	);
+
+	return $items;
+}
+
+/**
+ * Function main_page
+ */
+function my_theming_page() {
+
+	$theming_page_content = '';
+
+	$itemslist = array(
+		'items' => array(
+			t('Item 1'),
+			t('Item 2'),
+			array(
+				'data'     => t('Item 3'),
+				'children' => array(
+					t('Level 2 Item 1'),
+					t('Level 2 Item 2'),
+					array(
+						'data'     => t('Level 2 Item 3'),
+						'children' => array(
+							t('Level 3 Item 1'),
+							t('Level 3 Item 1')
+						),
+					),
+					t('Level 2 Item 4')
+				),
+			),
+			t('Item 4'),
+		),
+
+		'title' => t('Items list:'),
+		'type'       => 'ul',
+		'attributes' => array('class' => 'my-list-class')
+	);
+
+	$tablehead = array(
+		array('data' => t('Main cell #1')),
+		array('data' => t('Main cell #2')),
+		array('data' => t('Main cell #3'))
+	);
+
+	$tablerow [] = array(
+		array('data' => t('Row #1 Cell #1')),
+		array('data' => t('Row #1 Cell #2')),
+		array('data' => t('Row #1 Cell #3'))
+	);
+
+	$tablerow [] = array(
+		array('data' => t('Row #2 Cell #1')),
+		array('data' => t('Row #2 Cell #2')),
+		array('data' => t('Row #2 Cell #3'))
+	);
+
+	$tablerow [] = array(
+		array('data' => t('Row #3 Cell #1')),
+		array('data' => t('Row #3 Cell #2')),
+		array('data' => t('Row #3 Cell #3'))
+	);
+
+	$table = array(
+		'header'     => $tablehead,
+		'rows'       => $tablerow,
+		'attributes' => array(),
+		'caption'    => 'Test table:',
+		'colgroups'  => NULL,
+		'sticky'     => '',
+		'empty'      => ''
+	);
+
+	drupal_add_library('system', 'drupal.collapse');
+
+	$fieldset = array(
+		'#title'      => t('theme_fieldset() ' . t('example:')),
+		'#children'   => 'Tadaaa!!!',
+		'#collapsible'=> TRUE,
+		'#collapsed'  => TRUE,
+		'#attributes' => array(
+			'class' => array('collapsible', 'collapsed')
+		),
+	);
+
+	$image = array(
+		'style_name' => 'large',
+		'path'       => 'film_icons/dragmetohell.jpg',
+		'width'      => '428',
+		'height'     => '634',
+		'alt'        => 'alt field',
+		'title'      => 'The IMAGE!!!111',
+		'attributes' => array()
+	);
+
+	$theming_page_content .= '<H1>' . t('Page for theming examples:') . '</H1><br/>';
+	$theming_page_content .= '<H3>theme_item_list() ' . t('example:') . '</H3><br/>';
+	$theming_page_content .= theme_item_list($itemslist) . '<br/>';
+	$theming_page_content .= '<H3>theme_table() ' . t('example:') . '</H3><br/>';
+	$theming_page_content .= theme_table($table) . '<br/>';
+	$theming_page_content .= theme('fieldset', array('element' => $fieldset));
+	$theming_page_content .= '<H3>theme_image_style()' . t('example:') . '</H1><br/>';
+	$theming_page_content .= theme_image_style($image) . '<br/>';
+	$theming_page_content .= '<H3>hook_theme() ' . t('example:') . '<br/>';
+	$theming_page_content .= theme('my_theming_htwo', array('text' => 'H2 text')) . '<br/>';
+	$theming_page_content .= theme('my_theming_strong', array('text' => 'Strong text')) . '<br/><br/>';
+	$theming_page_content .= '<H3>template.tpl.php ' . t('example:') . '</H1>';
+	$theming_page_content .= theme('my_theming_get_template', array(
+		'title' => 'Page title',
+		'body'  => 'This is template.tpl.php. It`s $body.',
+		'link'  => 'It`s $link.'));
+
+	return $theming_page_content;
+}
+
+
+
+
+
+/**
+ *Implements hook_theme()
+ */
+function my_theming_theme() {
+	return array(
+		'my_theming_htwo' => array(
+			'variables' => array('text' => NULL),
+		),
+		'my_theming_strong' => array(
+			'variables' => array('text' => NULL),
+		),
+		'my_theming_get_template' => array(
+			'template'  => 'template',
+			'arguments' => array(
+				'title' => NULL,
+				'body'  => NULL,
+				'link'  => NULL
+			)
+		),
+	);
+}
+
+/**
+ *Function theme_my_theming_htwo
+ */
+function theme_my_theming_htwo($variables) {
+	$text = $variables['text'];
+	return '<H2>' . $text . '</H2>';
+}
+
+/**
+ *Function theme_my_theming_strong
+ */
+function theme_my_theming_strong($variables) {
+	$text = $variables['text'];
+	return '<strong>' . $text . '</strong>';
+}

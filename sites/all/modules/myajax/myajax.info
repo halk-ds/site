@@ -1,0 +1,5 @@
+;$Id$
+name = My ajax
+description = "Ajax task"
+version = "7.x-dev"
+core = "7.x"

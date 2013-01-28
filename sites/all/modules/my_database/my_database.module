@@ -1,0 +1,299 @@
+<?php
+function my_database_menu() {
+  $items = array();
+
+  $items['db-insert'] = array(
+    'title'           => 'db_insert',
+    'page callback'   => 'my_database_db_insert_page',
+    'access callback' => TRUE
+  );
+  $items['db-select'] = array(
+    'title'           => 'db_select',
+    'page callback'   => 'my_database_db_select_page',
+    'access callback' => TRUE
+  );
+  $items['db-select/delete/%'] = array(
+    'title'           => 'Delete line',
+    'page callback'   => 'my_database_delete_line_page',
+    'access callback' => TRUE
+  );
+  $items['db-select/delete-confirmed/%'] = array(
+    'title'           => 'Delete confirmed line',
+    'page callback'   => 'my_database_delete_confirmed_line_page',
+    'access callback' => TRUE
+  );
+
+  return $items;
+}
+
+function my_database_db_insert_page() {
+/*
+  $objid = arg(1);
+  if (!is_null($objid)) {
+    if (is_numeric($objid)){
+      $objid = TRUE;
+    }
+    else {
+      $objid = FALSE;
+    }
+  }
+  else {
+    $objid = FALSE;
+  }
+*/
+  return drupal_get_form('my_database_db_insert_form');
+}
+
+function my_database_delete_line_page() {
+  $objid = arg(2);
+  $params = array(
+    '!ok' => l(t('Ok'), '/db-select/delete-confirmed/' . $objid),
+
+  );
+  t('Are you sure? <br/> !ok !cancel', $params);
+  return t('Are you sure?<br/> <a href="/db-select/delete-confirmed/' . $objid . '">Yes</a> <a href="/db-select">Cancel</a>');
+}
+
+/**
+ * Why?
+ */
+function my_database_delete_confirmed_line_page() {
+
+  $objid = arg(2);
+  if (!is_null($objid)) {
+    if (is_numeric($objid)){
+      $query = db_delete('custom_table')
+        ->condition('id', $objid)
+        ->execute();
+      $objid = TRUE;
+      if (is_null($query)) {
+        $objid = FALSE;
+      }
+    }
+    else {
+      $objid = FALSE;
+    }
+  }
+  else {
+    $objid = FALSE;
+  }
+
+  if ($objid) {
+    drupal_goto('db-select');
+    $deleted = 'Deleted!';
+  }
+  else {
+    $deleted = 'Wrong item ID! <br/> <a href="/db-select">Back</a>';
+  }
+
+  return $deleted;
+}
+
+function my_database_db_select_page() {
+  $tablehead = array(
+    array('data' => 'Id'),
+    array('data' => '#'),
+    array('data' => 'Teaser'),
+    array('data' => 'Text'),
+    array('data' => 'Action')
+  );
+
+  $result = db_select('custom_table', 'ct')
+  ->fields('ct')
+  ->orderBy('id','ASC')
+  ->execute();
+
+  while ($record = $result->fetchAssoc()) {
+    $tablerow [] = array(
+
+      array('data' => $record['id']),
+      array('data' => $record['number']),
+      array('data' => $record['teaser']),
+      array('data' => $record['text']),
+      array('data' => '<a href="/db-insert/' . $record['id'] . '">Edit</a> <a href="/db-select/delete/' . $record['id'] . '">Delete</a>')
+    );
+  }
+
+  $table = array(
+    'header'     => $tablehead,
+    'rows'       => $tablerow,
+    'attributes' => array(),
+    'caption'    => '`drupal_site`.`custom_table` content:',
+    'colgroups'  => NULL,
+    'sticky'     => '',
+    'empty'      => ''
+  );
+  return theme_table($table);
+}
+
+function my_database_db_insert_form($form_state) {
+
+  $objid = arg(1);
+  if (!is_null($objid)) {
+    if (is_numeric($objid)){
+      $result = db_select('custom_table', 'ct')
+        ->fields('ct')
+        ->condition('id',$objid,'=')
+        ->execute()
+        ->fetchAssoc();
+      $objid = TRUE;
+      if (is_null($result)) {
+        $objid = FALSE;
+      }
+    }
+    else {
+      $objid = FALSE;
+    }
+  }
+  else {
+    $objid = FALSE;
+  }
+
+  if (!$objid) {
+    $d_num = '0';
+    $d_tea = 'teaser';
+    $d_tex = 'text';
+  }
+  else {
+    $d_num = $result['number'];
+    $d_tea = $result['teaser'];
+    $d_tex = $result['text'];
+  }
+
+  $form = array(
+    'number' => array(
+      '#type' => 'textfield',
+      '#title' => 'Number',
+      '#required' => TRUE,
+      '#default_value' => $d_num,
+      '#description' => 'Enter your number. (int)',
+      '#size' => '20',
+      '#maxlenght' => '20',
+    ),
+    'teaser' => array(
+      '#type' => 'textfield',
+      '#title' => 'Teser',
+      '#required' => TRUE,
+      '#default_value' => $d_tea,
+      '#description' => 'You can use latin letters(max 150), spaces and such symbols as ` " - , .',
+      '#size' => '20',
+      '#maxlenght' => '150',
+    ),
+    'text' => array(
+      '#type' => 'textarea',
+      '#title' => 'Text',
+      '#required' => TRUE,
+      '#default_value' => $d_tex,
+      '#description' => 'You can use latin letters, spaces and such symbols as  ` " - , .',
+    ),
+  );
+
+  if ($objid) {
+    $form['id'] = array(
+      '#type' => 'hidden',
+      '#value' => $result['id'],
+    );
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+
+ return $form;
+}
+
+function my_database_db_insert_form_validate($form, &$form_state) {
+  if (is_numeric($form_state['values']['number'])) {
+    if (($form_state['values']['number'] > 4294967295)||($form_state['values']['number'] < 0)) {
+      form_set_error('number','Number field value is not in uint range.');
+    }
+  }
+  else {
+    form_set_error('number','Number field value is not numeric.');
+  }
+
+  if (!preg_match('/^[A-Za-z0-9`"\-,\.\s]{1,150}$/', $form_state['values']['teaser'])) {
+    form_set_error('teaser','Wrong char in teaser or it`s too long.');
+  }
+
+  if (!preg_match('/^[A-Za-z0-9`"\-,\.\s]{1,}$/', $form_state['values']['text'])) {
+    form_set_error('text','Wrong char in text.');
+  }
+}
+
+
+
+// drupal_set_message(my_database_show_array($));
+function my_database_show_array($ar, $maxdeepth = 3, $deepth = 1) {
+
+  $dummy = '&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp';
+  $tab = '';
+  for ($i=1; $i<$deepth; $i++) {
+    $tab .= $dummy;
+  }
+  $dummy = '*';
+  $prefix = '';
+  for ($i=1; $i<$deepth; $i++) {
+    $prefix .= $dummy;
+  }
+  $prefix .= ' ';
+  $dummy = '';
+
+  if (($deepth <= $maxdeepth) && ($deepth > 0) ) {
+    $deepth = $deepth + 1;
+    if (!empty($ar)) {
+      foreach($ar as $k => $v) {
+        if (is_array($v) || is_object($v)) {
+          if (is_array($v)) {
+            $dummy .= $tab . $prefix . $k . ' => Array<br/>';
+          }
+          else {
+            $dummy .= $tab . $prefix . $k . ' => Object<br/>';
+          }
+          $dummy .= func_my_theme_show_array($v, $maxdeepth, $deepth);
+        }
+        else {
+          if ($v == NULL) $v = 'NULL';
+          $dummy .= $tab . $prefix . $k . ' => ' . $v . '<br/>';
+        }
+      }
+    }
+    else {
+      $dummy .= $tab . '...empty...<br/>';
+    }
+  }
+  else {
+    $dummy = $tab . ' MAX deepth...<br/>';
+  }
+
+  return $dummy;
+}
+
+function my_database_db_insert_form_submit($form, &$form_state) {
+  if (isset($form_state['values']['id'])) {
+    $query = db_update('custom_table') // Table name no longer needs {}
+      ->fields(array(
+        'number' => $form_state['values']['number'],
+        'teaser' => $form_state['values']['teaser'],
+        'text' => $form_state['values']['text']
+      ))
+      ->condition('id', $form_state['values']['id'], '=')
+      ->execute();
+    drupal_set_message('Update was successful.');
+  }
+  else {
+    $query = db_insert('custom_table')
+      -> fields(array(
+        'number' => $form_state['values']['number'],
+        'teaser' => $form_state['values']['teaser'],
+        'text' => $form_state['values']['text']
+      ))
+      -> execute();
+    drupal_set_message('Insert was successful.');
+  }
+  if (!$query) {
+    drupal_set_message('Query error.');
+  }
+  $form_state['redirect'] = 'db-select';
+}
